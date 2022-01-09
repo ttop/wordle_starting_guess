@@ -6,7 +6,7 @@ This code reads that list, filters it down to just the five-letter words (483 of
 
 Each word gets a score based on the letters that appear in the word. Part of the score is based on the frequency of each letter in the eligible words. For example, 'A' is the most commonly used letter in the eligible words--it appears a total of 213 times--so an 'A' gets 213 points. 
 
-The other part of the score is based on the frequency of the letter _in that position_ within the eligible words. For example, 'S' is the most frequent letter used in the first position (80 words), so it gets a bonus of 80 * 3 (I use 3 as an arbitrary multiplier here).
+The other part of the score is based on the frequency of the letter _in that position_ within the eligible words. For example, 'S' is the most frequent letter used in the first position (80 words), so when it appears in the first position it gets a bonus of 80 * 3 (I use 3 as an arbitrary multiplier here).
 
 Additionally, a letter's score is reduced each additional time that it appears in a word, since knowing which letters appear in the answer is valuable information and without knowing ahead of time that a letter appears multiple times it is probably best to avoid duplicate letters in the initial guess. So each additional time that a letter appears I have arbitrarily divided that letter's score by 4 times the number of times it has previously appeared. 
 
