@@ -102,4 +102,4 @@ if __name__ == '__main__':
     count = 0
     for idx in range(30):
         word = scored_rank[idx]
-        print(word + ": " + str(word_scores[word]))
+        print(word.upper() + ": " + str(word_scores[word]))
