@@ -98,8 +98,8 @@ if __name__ == '__main__':
             word, usage_frequency, position_frequency)
 
     scored_rank = sorted(word_scores, key=word_scores.get, reverse=True)
-    max_to_display = 15
+    max_to_display = 30
     count = 0
-    for idx in range(30):
+    for idx in range(max_to_display):
         word = scored_rank[idx]
         print(word.upper() + ": " + str(word_scores[word]))

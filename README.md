@@ -10,7 +10,7 @@ The other part of the score is based on the frequency of the letter _in that pos
 
 Additionally, a letter's score is reduced each additional time that it appears in a word, since knowing which letters appear in the answer is valuable information and without knowing ahead of time that a letter appears multiple times it is probably best to avoid duplicate letters in the initial guess. So each additional time that a letter appears I have arbitrarily divided that letter's score by 4 times the number of times it has previously appeared. 
 
-Here are the top 15 starting guesses based on using this algorithm, along with their score:
+Here are the top 30 starting guesses based on using this algorithm, along with their score:
 
     TRACE: 2085
     SHARE: 2068
