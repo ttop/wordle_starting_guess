@@ -42,3 +42,5 @@ Here are the top 15 starting guessed based on using this algorithm, along with t
     WRITE: 1770
     REACT: 1764
     TRIBE: 1763
+
+Before I undertook this effort, I speculated that STARE was a very good starting guess. And according to this scoring methodology, that is true -- it ended up in third place.
