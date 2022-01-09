@@ -8,9 +8,9 @@ Each word gets a score based on the letters that appear in the word. Part of the
 
 The other part of the score is based on the frequency of the letter _in that position_ within the eligible words. For example, 'S' is the most frequent letter used in the first position (80 words), so it gets a bonus of 80 * 3 (I use 3 as an arbitrary multiplier here).
 
-Additionally, a letter's score is reduced each additional time that it appears in a word, since knowing which letters appear in the answer is valuable information and without knowing ahead of time that a letter appears multiple times it is probably best to avoid duplicate letters in the initial guess. So each additional time that a letter appears I have arbitrary divided that letter's score by 4 times the number of times it has previously appeared. 
+Additionally, a letter's score is reduced each additional time that it appears in a word, since knowing which letters appear in the answer is valuable information and without knowing ahead of time that a letter appears multiple times it is probably best to avoid duplicate letters in the initial guess. So each additional time that a letter appears I have arbitrarily divided that letter's score by 4 times the number of times it has previously appeared. 
 
-Here are the top 15 starting guessed based on using this algorithm, along with their score:
+Here are the top 15 starting guesses based on using this algorithm, along with their score:
 
     TRACE: 2085
     SHARE: 2068
