@@ -10,7 +10,7 @@ def load_words():
     return valid_words
 
 
-def score_word(word, usage_freq, position_freq):
+def score_word(word, usage_freq, position_freq, params):
     # Score word using the provided dictionary usage_freq where the letter is
     # worth the number of points corresponding to its frequency, plus a bonus
     # based on how common that letter is in that position in the word,
@@ -23,11 +23,12 @@ def score_word(word, usage_freq, position_freq):
     for position in range(0, 5):
         letter = word[position]
         letter_score = (usage_freq[letter] +
-                        (position_freq[position][letter] * 3))
+                        (position_freq[position][letter] *
+                             params['position_mult']))
 
         if letter in seen:
-            reduction_factor = seen[letter] * 4
-            letter_score = math.floor(letter_score / reduction_factor)
+            reduction_factor = seen[letter] * params['repeat_divisor']
+            letter_score = int(letter_score / reduction_factor)
             seen[letter] = seen[letter] + 1
         else:
             seen[letter] = 1
@@ -36,7 +37,7 @@ def score_word(word, usage_freq, position_freq):
     return word_score
 
 
-def score_two_words(word1, word2, usage_freq, position_freq):
+def score_two_words(word1, word2, usage_freq, position_freq, params):
     # Score two words using the provided dictionary usage_freq. In the
     # second word, a letter is worth nothing if it matches the first
     # word, but follows the same rules as the single-word scoring
@@ -50,11 +51,12 @@ def score_two_words(word1, word2, usage_freq, position_freq):
     for position in range(0, 5):
         letter = word1[position]
         letter_score = (usage_freq[letter] +
-                        (position_freq[position][letter] * 3))
+                        (position_freq[position][letter] *
+                             params['position_mult']))
 
         if letter in seen:
-            reduction_factor = seen[letter] * 4
-            letter_score = math.floor(letter_score / reduction_factor)
+            reduction_factor = seen[letter] * params['repeat_divisor']
+            letter_score = int(letter_score / reduction_factor)
             seen[letter] = seen[letter] + 1
         else:
             seen[letter] = 1
@@ -62,7 +64,6 @@ def score_two_words(word1, word2, usage_freq, position_freq):
         words_score = words_score + letter_score
 
     # Next, score the second word in the context of the first
-    second_word_reduce = 0.5
     for position in range(0, 5):
         letter = word2[position]
 
@@ -71,17 +72,92 @@ def score_two_words(word1, word2, usage_freq, position_freq):
             continue
         
         letter_score = (usage_freq[letter] +
-                        (position_freq[position][letter] * 3))
+                        (position_freq[position][letter] *
+                             params['position_mult']))
 
         if letter in seen:
-            reduction_factor = seen[letter] * 4
-            letter_score = math.floor(letter_score / reduction_factor)
+            reduction_factor = seen[letter] * params['repeat_divisor']
+            letter_score = int(letter_score / reduction_factor)
             seen[letter] = seen[letter] + 1
         else:
             seen[letter] = 1
 
         words_score = (words_score +
-                           math.floor(letter_score * second_word_reduce))
+                           int(letter_score * params['second_word']))
+        
+    return words_score
+
+
+def score_three_words(word1, word2, word3, usage_freq, position_freq, params):
+    # Score two words using the provided dictionary usage_freq. In the
+    # second word, a letter is worth nothing if it matches the first
+    # word, but follows the same rules as the single-word scoring
+    # otherwise. Also, consider reducing the value of the second word
+    # a bit, since you may not use it if the first is very useful.
+    # (The third counts even less.)
+
+    seen = {}
+    words_score = 0
+
+    # Start by scoring the first word as usual
+    for position in range(0, 5):
+        letter = word1[position]
+        letter_score = (usage_freq[letter] +
+                        (position_freq[position][letter] *
+                             params['position_mult']))
+
+        if letter in seen:
+            reduction_factor = seen[letter] * params['repeat_divisor']
+            letter_score = int(letter_score / reduction_factor)
+            seen[letter] = seen[letter] + 1
+        else:
+            seen[letter] = 1
+
+        words_score = words_score + letter_score
+
+    # Next, score the second word in the context of the first
+    for position in range(0, 5):
+        letter = word2[position]
+
+        # A letter in the same position as before contributes nothing
+        if letter == word1[position]:
+            continue
+        
+        letter_score = (usage_freq[letter] +
+                        (position_freq[position][letter] *
+                             params['position_mult']))
+
+        if letter in seen:
+            reduction_factor = seen[letter] * params['repeat_divisor']
+            letter_score = int(letter_score / reduction_factor)
+            seen[letter] = seen[letter] + 1
+        else:
+            seen[letter] = 1
+
+        words_score = (words_score +
+                           int(letter_score * params['second_word']))
+        
+    # Next, score the third word
+    for position in range(0, 5):
+        letter = word3[position]
+
+        # A letter in the same position as before contributes nothing
+        if letter == word1[position] or letter==word2[position]:
+            continue
+        
+        letter_score = (usage_freq[letter] +
+                        (position_freq[position][letter] *
+                             params['position_mult']))
+
+        if letter in seen:
+            reduction_factor = seen[letter] * params['repeat_divisor']
+            letter_score = int(letter_score / reduction_factor)
+            seen[letter] = seen[letter] + 1
+        else:
+            seen[letter] = 1
+
+        words_score = (words_score +
+                           int(letter_score * params['third_word']))
         
     return words_score
 
@@ -142,11 +218,18 @@ if __name__ == '__main__':
     usage_frequency = get_usage_frequency(eligible_words)
     position_frequency = get_position_frequency(eligible_words)
 
+    # Set parameters for relative weighting of different factors:
+    # The multiplier for letter position frequency, the factor to
+    # divide by for repeated letters, and the reduction in value
+    # of later words.
+    params = {'position_mult' : 3, 'repeat_divisor' : 4,
+                  'second_word' : 0.5, 'third_word' : 0.2}
+    
     # Score all the words
     word_scores = {}
     for word in eligible_words:
         word_scores[word] = score_word(
-            word, usage_frequency, position_frequency)
+            word, usage_frequency, position_frequency, params)
 
     # Display the top ranking words
     scored_rank = sorted(word_scores, key=word_scores.get, reverse=True)
@@ -165,7 +248,8 @@ if __name__ == '__main__':
         word1 = scored_rank[idx]
         for word2 in eligible_words:
             two_word_scores[word1 + " " + word2] = score_two_words(
-                word1, word2, usage_frequency, position_frequency)
+                word1, word2,
+                usage_frequency, position_frequency, params)
 
     scored_rank_pairs = sorted(
         two_word_scores, key=two_word_scores.get, reverse=True)
@@ -173,4 +257,24 @@ if __name__ == '__main__':
     for idx in range(max_to_display):
         words = scored_rank_pairs[idx]
         print(words.upper() + ": " + str(two_word_scores[words]))
+
+    print
+    
+    # Consider followup words for the top first pairs
+    three_word_scores = {}
+    first_pairs_to_consider = 30
+    for idx in range(first_pairs_to_consider):
+        pair = scored_rank_pairs[idx]
+        [word1, word2] = pair.split()
+        for word3 in eligible_words:
+            three_word_scores[pair + " " + word3] = score_three_words(
+                word1, word2, word3,
+                usage_frequency, position_frequency, params)
+
+    scored_rank_threes = sorted(
+        three_word_scores, key=three_word_scores.get, reverse=True)
+    max_to_display = 30
+    for idx in range(max_to_display):
+        words = scored_rank_threes[idx]
+        print(words.upper() + ": " + str(three_word_scores[words]))
 
