@@ -167,10 +167,10 @@ if __name__ == '__main__':
             two_word_scores[word1 + " " + word2] = score_two_words(
                 word1, word2, usage_frequency, position_frequency)
 
-    scored_rank = sorted(two_word_scores, key=two_word_scores.get, reverse=True)
+    scored_rank_pairs = sorted(
+        two_word_scores, key=two_word_scores.get, reverse=True)
     max_to_display = 30
-    count = 0
     for idx in range(max_to_display):
-        words = scored_rank[idx]
+        words = scored_rank_pairs[idx]
         print(words.upper() + ": " + str(two_word_scores[words]))
 
