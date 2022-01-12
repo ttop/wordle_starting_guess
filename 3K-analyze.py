@@ -4,12 +4,7 @@ import math
 
 def load_words():
     # from https://www.ef.edu/english-resources/english-vocabulary/top-3000-words/
-    #file_to_open = 'common_3000.txt'
-    # from https://github.com/first20hours/google-10000-english
-    ### No good: includes plurals
-    #file_to_open = 'google-10000-english-usa-no-swears-medium.txt'
-    # from https://www.wordfrequency.info/samples.asp
-    file_to_open = 'lemmas-5000.csv'
+    file_to_open = 'common_3000.txt'
     with open(file_to_open) as word_file:
         valid_words = set(word_file.read().split())
     return valid_words
@@ -189,8 +184,10 @@ def get_usage_frequency(wordlist):
         frequency_count[letter] = 0
 
     for word in wordlist:
-        for letter in word:
-            frequency_count[letter] = frequency_count[letter] + 1
+        for letter in 'abcdefghijklmnopqrstuvwxyz':
+            if letter in word:
+                frequency_count[letter] = frequency_count[letter] + 1
+
     return frequency_count
 
 
@@ -221,7 +218,7 @@ if __name__ == '__main__':
     # The multiplier for letter position frequency, the factor to
     # divide by for repeated letters, and the reduction in value
     # of later words.
-    params = {'position_mult' : 2, 'second_word' : 0.5, 'third_word' : 0.2}
+    params = {'position_mult' : 1.5, 'second_word' : 0.5, 'third_word' : 0.2}
     
     # Score all the words
     word_scores = {}
@@ -241,7 +238,7 @@ if __name__ == '__main__':
 
     # Consider followup words for the top first words
     two_word_scores = {}
-    first_words_to_consider = 30
+    first_words_to_consider = 50
     for idx in range(first_words_to_consider):
         word1 = scored_rank[idx]
         for word2 in eligible_words:
@@ -251,7 +248,7 @@ if __name__ == '__main__':
 
     scored_rank_pairs = sorted(
         two_word_scores, key=two_word_scores.get, reverse=True)
-    max_to_display = 30
+    max_to_display = 20
     for idx in range(max_to_display):
         words = scored_rank_pairs[idx]
         print(words.upper() + ": " + str(int(two_word_scores[words])))
@@ -260,7 +257,7 @@ if __name__ == '__main__':
     
     # Consider followup words for the top first pairs
     three_word_scores = {}
-    first_pairs_to_consider = 30
+    first_pairs_to_consider = 80
     for idx in range(first_pairs_to_consider):
         pair = scored_rank_pairs[idx]
         [word1, word2] = pair.split()
@@ -271,7 +268,7 @@ if __name__ == '__main__':
 
     scored_rank_threes = sorted(
         three_word_scores, key=three_word_scores.get, reverse=True)
-    max_to_display = 30
+    max_to_display = 20
     for idx in range(max_to_display):
         words = scored_rank_threes[idx]
         print(words.upper() + ": " + str(int(three_word_scores[words])))
