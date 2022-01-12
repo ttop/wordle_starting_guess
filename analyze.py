@@ -36,6 +36,56 @@ def score_word(word, usage_freq, position_freq):
     return word_score
 
 
+def score_two_words(word1, word2, usage_freq, position_freq):
+    # Score two words using the provided dictionary usage_freq. In the
+    # second word, a letter is worth nothing if it matches the first
+    # word, but follows the same rules as the single-word scoring
+    # otherwise. Also, consider reducing the value of the second word
+    # a bit, since you may not use it if the first is very useful.
+
+    seen = {}
+    words_score = 0
+
+    # Start by scoring the first word as usual
+    for position in range(0, 5):
+        letter = word1[position]
+        letter_score = (usage_freq[letter] +
+                        (position_freq[position][letter] * 3))
+
+        if letter in seen:
+            reduction_factor = seen[letter] * 4
+            letter_score = math.floor(letter_score / reduction_factor)
+            seen[letter] = seen[letter] + 1
+        else:
+            seen[letter] = 1
+
+        words_score = words_score + letter_score
+
+    # Next, score the second word in the context of the first
+    second_word_reduce = 0.5
+    for position in range(0, 5):
+        letter = word2[position]
+
+        # A letter in the same position as before contributes nothing
+        if letter == word1[position]:
+            continue
+        
+        letter_score = (usage_freq[letter] +
+                        (position_freq[position][letter] * 3))
+
+        if letter in seen:
+            reduction_factor = seen[letter] * 4
+            letter_score = math.floor(letter_score / reduction_factor)
+            seen[letter] = seen[letter] + 1
+        else:
+            seen[letter] = 1
+
+        words_score = (words_score +
+                           math.floor(letter_score * second_word_reduce))
+        
+    return words_score
+
+
 def print_frequency_count(letter_count):
     print('Frequency count:\n')
     for letter in sorted(letter_count, key=letter_count.get, reverse=True):
@@ -92,14 +142,35 @@ if __name__ == '__main__':
     usage_frequency = get_usage_frequency(eligible_words)
     position_frequency = get_position_frequency(eligible_words)
 
+    # Score all the words
     word_scores = {}
     for word in eligible_words:
         word_scores[word] = score_word(
             word, usage_frequency, position_frequency)
 
+    # Display the top ranking words
     scored_rank = sorted(word_scores, key=word_scores.get, reverse=True)
     max_to_display = 30
-    count = 0
+
     for idx in range(max_to_display):
         word = scored_rank[idx]
         print(word.upper() + ": " + str(word_scores[word]))
+
+    print
+
+    # Consider followup words for the top first words
+    two_word_scores = {}
+    first_words_to_consider = 30
+    for idx in range(first_words_to_consider):
+        word1 = scored_rank[idx]
+        for word2 in eligible_words:
+            two_word_scores[word1 + " " + word2] = score_two_words(
+                word1, word2, usage_frequency, position_frequency)
+
+    scored_rank = sorted(two_word_scores, key=two_word_scores.get, reverse=True)
+    max_to_display = 30
+    count = 0
+    for idx in range(max_to_display):
+        words = scored_rank[idx]
+        print(words.upper() + ": " + str(two_word_scores[words]))
+
