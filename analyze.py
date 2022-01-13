@@ -1,12 +1,15 @@
 import re
-import math
+import sys
 
-
-def load_words():
+def load_words(file):
     # from https://www.ef.edu/english-resources/english-vocabulary/top-3000-words/
     #file_to_open = 'common_3000.txt'
-    # from https://www.wordfrequency.info/samples.asp, deduplicated
-    file_to_open = 'lemmas-5000-sort.csv'
+    if file:
+        file_to_open = file
+    else:
+        # from https://www.wordfrequency.info/samples.asp, deduplicated
+        file_to_open = 'lemmas-5000-sort.csv'
+
     with open(file_to_open) as word_file:
         valid_words = set(word_file.read().split())
     return valid_words
@@ -212,25 +215,36 @@ def get_position_frequency(wordlist):
 
 
 if __name__ == '__main__':
-    eligible_words = get_five_letter_words(load_words())
-    usage_frequency = get_usage_frequency(eligible_words)
-    position_frequency = get_position_frequency(eligible_words)
-
     # Set parameters for relative weighting of different factors:
     # The multiplier for letter position frequency, the factor to
     # divide by for repeated letters, and the reduction in value
     # of later words.
     params = {'position_mult' : 1.5, 'second_word' : 0.5, 'third_word' : 0.2}
-    
-    # Score all the words
+
+    # If we provided our first word
+    my_word1 = ""
+    if len(sys.argv) > 1 and len(sys.argv[1]) == 5:
+        my_word1 = sys.argv[1].lower()
+
+    # Load word lists and frequencies
+    eligible_answers = get_five_letter_words(load_words(''))
+    eligible_guesses = get_five_letter_words(load_words(''))
+    usage_frequency = get_usage_frequency(eligible_answers)
+    position_frequency = get_position_frequency(eligible_answers)
+
+    # Score all the words, or if the first was given, score just it
     word_scores = {}
-    for word in eligible_words:
-        word_scores[word] = score_word(
-            word, usage_frequency, position_frequency, params)
+    if not my_word1:
+        for word in eligible_guesses:
+            word_scores[word] = score_word(
+                word, usage_frequency, position_frequency, params)
+    else:
+        word_scores[my_word1] = score_word(
+            my_word1, usage_frequency, position_frequency, params)
 
     # Display the top ranking words
     scored_rank = sorted(word_scores, key=word_scores.get, reverse=True)
-    max_to_display = 30
+    max_to_display = min(30,len(word_scores))
 
     for idx in range(max_to_display):
         word = scored_rank[idx]
@@ -240,10 +254,10 @@ if __name__ == '__main__':
 
     # Consider followup words for the top first words
     two_word_scores = {}
-    first_words_to_consider = 50
+    first_words_to_consider = min(50,len(scored_rank))
     for idx in range(first_words_to_consider):
         word1 = scored_rank[idx]
-        for word2 in eligible_words:
+        for word2 in eligible_guesses:
             two_word_scores[word1 + " " + word2] = score_two_words(
                 word1, word2,
                 usage_frequency, position_frequency, params)
@@ -263,7 +277,7 @@ if __name__ == '__main__':
     for idx in range(first_pairs_to_consider):
         pair = scored_rank_pairs[idx]
         [word1, word2] = pair.split()
-        for word3 in eligible_words:
+        for word3 in eligible_guesses:
             three_word_scores[pair + " " + word3] = score_three_words(
                 word1, word2, word3,
                 usage_frequency, position_frequency, params)
