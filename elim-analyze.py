@@ -42,7 +42,6 @@ def word_match(word, \
 
 # Find conditions on answers given list of guesses and answer
 def eval_words(guesses, answer):
-    exact_re = ""
     exact_positions = {} # Dict of known letters: e.g. {2:r, 4:c}
     exact_letters = set() # Set of exactly known letters: e.g. {c, r}
     include_letters = set() # Letters that must be included at unknown position
@@ -74,6 +73,10 @@ def score_words(guesses, eligible_answers):
 
     # Loop over all eligible answers and "score" the guess
     for answer in eligible_answers:
+        # If we've already got it, ZERO solution space remains: add nothing
+        if answer in guesses:
+            continue
+        
         exact_positions, include_letters, mixed_letters, absent_letters = \
           eval_words(guesses, answer)
 
