@@ -86,6 +86,8 @@ The top starting guesses resulting from all this (and the average percentage of 
 
 These first word results aren't all that different than the ones produced by the original scoring algorithm (and even closer to my adjustments to it), and in any case the words at the top of the list are fairly similar in effectiveness. But the two-word suggestions here are surprisingly different than the ones produced by my frequency-scoring algorithm: this must be somehow taking advantage of deeper patterns in letter arrangements. (It's quite striking that TRAIN, just rank 19/20 among first guesses, leads to 25% of the top two-word combinations including the top spot. But you really do want that first word to be as effective as possible, to make it more likely that you can make an _informed_ second choice rather than these generic ones.)
 
+And of course, these suggestions might be optimal for a computer trying to guess, but it's entirely possible that the best approach for human brains is different: maybe we'd be wiser to prioritize vowels, or first/last letters, or something else.
+
 Looking at a few third word choices, it would appear that an uninformed, "generic" choice of third word really isn't very helpful. Here are a couple of examples:
 
 	ARISE CLOTH POUND:  0.178% =  2.17% * 13.71% * 59.78%
