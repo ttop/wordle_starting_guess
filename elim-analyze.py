@@ -169,13 +169,13 @@ if __name__ == '__main__':
     # Now consider second words
     two_word_scores = {}
     if not my_word2:
-        count2 = 0
         best = ""
         best_score = 1
         
         first_words_to_consider = min(20,len(scored_rank))
         for count1 in range(first_words_to_consider):
             word1 = scored_rank[count1]
+            count2 = 0
             for word2 in eligible_guesses:
                 count2 += 1
                 pair = word1 + " " + word2
