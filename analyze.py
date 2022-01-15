@@ -1,4 +1,3 @@
-import re
 import sys
 
 def load_words(file):
@@ -170,11 +169,10 @@ def print_frequency_count(letter_count):
 def get_five_letter_words(wordlist):
     eligible_words = set()
     for word in wordlist:
-        include = True
         if len(word) != 5:
             continue
 
-        if re.match('[^a-zA-Z]', word):
+        if not word.isalpha():
             # In case the provided wordlist contains any non-letter characters
             continue
 
@@ -223,7 +221,7 @@ if __name__ == '__main__':
 
     # If we provided our first word
     my_word1 = ""
-    if len(sys.argv) > 1 and len(sys.argv[1]) == 5:
+    if len(sys.argv) > 1 and len(sys.argv[1]) == 5 and sys.argv[1].isalpha():
         my_word1 = sys.argv[1].lower()
 
     # Load word lists and frequencies
