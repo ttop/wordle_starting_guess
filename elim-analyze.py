@@ -273,10 +273,10 @@ if __name__ == '__main__':
                                 two_word_scores[first_pair]))
                         
     # Show the worst words, too, out of curiosity
-    if len(two_word_scores) > max_to_display+5:
+    if len(three_word_scores) > max_to_display+5:
         print "..."
         for idx in range(-5,0):
-            words = scored_rank_pairs[idx]
+            words = scored_rank_triples[idx]
             word_list = words.split()
         print(words.upper() + ": " + \
           '{:>7.3%}'.format(three_word_scores[words]) + " = " \
