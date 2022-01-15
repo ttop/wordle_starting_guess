@@ -8,10 +8,7 @@ For multi-word suggestions, you can either provide a first word (or two) as comm
 
 The original code used a list of  [3,000 most common words in English](https://www.ef.edu/english-resources/english-vocabulary/top-3000-words/), which resulted in 483 five letter words. This code instead uses a list of the [5000 most common word 'lemmas'](https://www.wordfrequency.info/samples.asp) (dictionary entry words, basically) from www.wordfrequency.info, which yields a list of 693 five letter words: I appreciate the somewhat larger sample, though the results are fairly similar. (Like the original creator, I haven't felt quite right just taking the eligible word list directly from the Wordle code: a bit too much like cheating.) It's worth noting that, as far as I've seen, Wordle _solutions_ are never(?) plurals or verb conjugations: if you use a word list that includes those, almost all of the top suggestions end in "ES". (Plurals are still valid _guesses_.)
 
-
-
-
-The top starting guesses resulting from all this (and their scores) are:
+The top starting guesses resulting from all this (and the average percentage of eligible answers that are still allowed after each) are:
 
 	ARISE:  2.17%
 	TRACE:  2.33%
