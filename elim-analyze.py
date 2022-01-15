@@ -144,7 +144,7 @@ if __name__ == '__main__':
         word_scores[my_word1] = \
           score_words([my_word1], eligible_answers) * score_scale
 
-    sys.stdout.write("\r" + " "*50)
+    sys.stdout.write("\r" + " "*52)
     sys.stdout.flush()
     print
     
@@ -197,7 +197,7 @@ if __name__ == '__main__':
         two_word_scores[my_word1 + " " + my_word2] = \
           score_words([my_word1, my_word2], eligible_answers) * score_scale
 
-    sys.stdout.write("\r" + " "*70)
+    sys.stdout.write("\r" + " "*76)
     sys.stdout.flush()
     print
 
@@ -226,3 +226,64 @@ if __name__ == '__main__':
 
 
     # If (only if) we provided a second word, heck, let's go for three
+    three_word_scores = {}
+    if my_word1 and my_word2:
+        count3 = 0
+        best = ""
+        best_score = 1
+        
+        for word3 in eligible_guesses:
+            count3 += 1
+            triple = my_word1 + " " + my_word2 + " " + word3
+            three_word_scores[triple] = \
+              score_words([my_word1, my_word2, word3], eligible_answers) \
+                * score_scale
+            if three_word_scores[triple] < best_score:
+                best = triple
+                best_score = three_word_scores[triple]
+            # Print an interesting progress message, since this is slow
+            if count3 % 5 == 0:
+                sys.stdout.write("\r" + '{:>3}'.format(count3) + "/" + \
+                  str(len(eligible_guesses)) + " (" + \
+                  '{:>3.0%}'.format(float(count3)/len(eligible_guesses)) + \
+                  "): " + triple + \
+                  ": " + '{:>7.3%}'.format(three_word_scores[triple]) + \
+                  " [Best: " + best + ":" + \
+                  '{:>7.3%}'.format(best_score) + "]")
+                sys.stdout.flush()
+
+    sys.stdout.write("\r" + " "*70)
+    sys.stdout.flush()
+    print
+
+    # Display the top ranking words
+    scored_rank_triples = sorted(three_word_scores, key=three_word_scores.get)
+    max_to_display = min(30,len(three_word_scores))
+    for idx in range(max_to_display):
+        words = scored_rank_triples[idx]
+        word_list = words.split()
+        first_pair = word_list[0] + " " + word_list[1]
+        print(words.upper() + ": " + \
+          '{:>7.3%}'.format(three_word_scores[words]) + " = " \
+          '{:>6.2%}'.format(word_scores[word_list[0]]) + " * " \
+          '{:>6.2%}'.format(\
+              two_word_scores[first_pair]/word_scores[word_list[0]]) \
+                   + " * " \
+          '{:>6.2%}'.format(three_word_scores[words] / \
+                                two_word_scores[first_pair]))
+                        
+    # Show the worst words, too, out of curiosity
+    if len(two_word_scores) > max_to_display+5:
+        print "..."
+        for idx in range(-5,0):
+            words = scored_rank_pairs[idx]
+            word_list = words.split()
+        print(words.upper() + ": " + \
+          '{:>7.3%}'.format(three_word_scores[words]) + " = " \
+          '{:>6.2%}'.format(word_scores[word_list[0]]) + " * " \
+          '{:>6.2%}'.format(\
+              two_word_scores[first_pair]/word_scores[word_list[0]]) \
+                   + " * " \
+          '{:>6.2%}'.format(three_word_scores[words] / \
+                                two_word_scores[first_pair]))
+        
