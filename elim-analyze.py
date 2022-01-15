@@ -162,13 +162,44 @@ if __name__ == '__main__':
             word = scored_rank[idx]
             print(word.upper() + ": " + '{:>6.2%}'.format(word_scores[word]))
 
-    print
 
     # Now consider second words
     two_word_scores = {}
-    if my_word2:
+    if not my_word2:
+        count2 = 0
+        best = ""
+        best_score = 1
+        
+        first_words_to_consider = min(20,len(scored_rank))
+        for count1 in range(first_words_to_consider):
+            word1 = scored_rank[count1]
+            for word2 in eligible_guesses:
+                count2 += 1
+                pair = word1 + " " + word2
+                two_word_scores[pair] = \
+                  score_words([word1, word2], eligible_answers) * score_scale
+                if two_word_scores[pair] < best_score:
+                    best = pair
+                    best_score = two_word_scores[pair]
+                # Print an interesting progress message, since this is slow
+                if count2 % 5 == 0:
+                    sys.stdout.write("\r[" + '{:>2}'.format(count1) + "/" + \
+                      str(first_words_to_consider) + "] " + \
+                      '{:>3}'.format(count2) + "/" + \
+                      str(len(eligible_guesses)) + " (" + \
+                      '{:>3.0%}'.format(float(count2)/len(eligible_guesses)) + \
+                      "): " + pair + \
+                      ": " + '{:>7.3%}'.format(two_word_scores[pair]) + \
+                      " [Best: " + best + ":" + \
+                      '{:>7.3%}'.format(best_score) + "]")
+                    sys.stdout.flush()
+    else:
         two_word_scores[my_word1 + " " + my_word2] = \
           score_words([my_word1, my_word2], eligible_answers) * score_scale
+
+    sys.stdout.write("\r" + " "*70)
+    sys.stdout.flush()
+    print
 
     # Display the top ranking words
     scored_rank_pairs = sorted(two_word_scores, key=two_word_scores.get)
@@ -183,8 +214,15 @@ if __name__ == '__main__':
 
     # Show the worst words, too, out of curiosity
     if len(two_word_scores) > max_to_display+5:
+        print "..."
         for idx in range(-5,0):
-            word = scored_rank[idx]
-            print(word.upper() + ": " + '{:>6.2%}'.format(word_scores[word]))
+            words = scored_rank_pairs[idx]
+            word_list = words.split()
+            print(words.upper() + ": " + \
+              '{:>7.3%}'.format(two_word_scores[words]) + " = " \
+              '{:>6.2%}'.format(word_scores[word_list[0]]) + " * " \
+              '{:>6.2%}'.format(\
+                  two_word_scores[words]/word_scores[word_list[0]]))
 
 
+    # If (only if) we provided a second word, heck, let's go for three
