@@ -15,31 +15,74 @@ def load_words(file):
     return valid_words
 
 
-def score_word(word, usage_freq, position_freq, params):
-    # Score word using the provided dictionary usage_freq. The first
-    # time a letter appears, it is worth the number of points equal to
-    # its frequency. There is an additional score based on how common
-    # that letter is in that position in the word.
+# Decide if this word matches known regular expression and list of letters
+def word_match(word, \
+      exact_positions, include_letters, mixed_letters, absent_letters):
+    #print word + " : " + exact_re + " : " + str(include_letters)
 
-    seen = {}
-    word_score = 0
+    for pos in exact_positions:
+        if word[pos] != exact_positions[pos]:
+            return False
 
-    for position in range(0, 5):
-        letter = word[position]
-        letter_score = 0
+    for pos in range(5):
+        if word[pos] in mixed_letters[pos]:
+            return False
 
-        # If first time seen, add the letter frequency to the score
-        if letter not in seen:
-            letter_score = usage_freq[letter]
-            seen[letter] = 1
+    for letter in absent_letters:
+        if letter in word:
+            return False
 
-        letter_score = (letter_score +
-                          (position_freq[position][letter] *
-                               params['position_mult']))
+    for letter in include_letters:
+        if not letter in word:
+            return False
+        
+    #print "+++ " + word + " : " + exact_re + " : " + str(include_letters)
+    return True
 
-        word_score = word_score + letter_score
 
-    return word_score
+# Find regular expression and included letters given guess and answer
+def eval_word(guess, answer):
+    exact_re = ""
+    exact_positions = {} # Dict of known letters: e.g. {2:r, 4:c}
+    exact_letters = set() # Set of exactly known letters: e.g. {c, r}
+    include_letters = set() # Letters that must be included at unknown position
+    mixed_letters = [set(), set(), set(), set(), set()] # Wrong @ each position
+    absent_letters = set() # Don't appear in the answer at all
+
+    for position in range(5):
+        if guess[position] == answer[position]:
+            exact_positions[position] = guess[position]
+            exact_letters.add(guess[position])
+        elif guess[position] in answer:
+            mixed_letters[position].add(guess[position])
+            include_letters.add(guess[position])
+        else:
+            absent_letters.add(guess[position])
+
+    for letter in exact_letters:
+        include_letters.discard(letter)
+
+    return [exact_positions, include_letters, mixed_letters, absent_letters]
+
+
+def score_word(guess, eligible_answers):
+    # Score word based on how much on average it reduces the space of available
+    # answers.
+
+    # Max value of this variable is len(eligible_answers)^2
+    matches = 0
+
+    # Loop over all eligible answers and "score" the guess
+    for answer in eligible_answers:
+        exact_positions, include_letters, mixed_letters, absent_letters = \
+          eval_word(guess, answer)
+
+        # Add num of eligible answers that ALSO match this guess
+        matches += sum(1 for word in eligible_answers if \
+          word_match(word, exact_positions, include_letters,
+                         mixed_letters, absent_letters))
+
+    return matches
 
 
 def score_two_words(word1, word2, usage_freq, position_freq, params):
@@ -53,7 +96,7 @@ def score_two_words(word1, word2, usage_freq, position_freq, params):
     words_score = 0
 
     # Start by scoring the first word as usual
-    for position in range(0, 5):
+    for position in range(5):
         letter = word1[position]
         letter_score = 0
 
@@ -69,7 +112,7 @@ def score_two_words(word1, word2, usage_freq, position_freq, params):
         words_score = words_score + letter_score
 
     # Next, score the second word in the context of the first
-    for position in range(0, 5):
+    for position in range(5):
         letter = word2[position]
         letter_score = 0
 
@@ -103,7 +146,7 @@ def score_three_words(word1, word2, word3, usage_freq, position_freq, params):
     words_score = 0
 
     # Start by scoring the first word as usual
-    for position in range(0, 5):
+    for position in range(5):
         letter = word1[position]
         letter_score = 0
 
@@ -119,7 +162,7 @@ def score_three_words(word1, word2, word3, usage_freq, position_freq, params):
         words_score = words_score + letter_score
 
     # Next, score the second word in the context of the first
-    for position in range(0, 5):
+    for position in range(5):
         letter = word2[position]
         letter_score = 0
 
@@ -139,7 +182,7 @@ def score_three_words(word1, word2, word3, usage_freq, position_freq, params):
         words_score = words_score + letter_score * params['second_word']
         
     # Next, score the third word
-    for position in range(0, 5):
+    for position in range(5):
         letter = word3[position]
         letter_score = 0
 
@@ -168,7 +211,7 @@ def print_frequency_count(letter_count):
 
 
 def get_five_letter_words(wordlist):
-    eligible_words = []
+    eligible_words = set()
     for word in wordlist:
         include = True
         if len(word) != 5:
@@ -178,7 +221,7 @@ def get_five_letter_words(wordlist):
             # In case the provided wordlist contains any non-letter characters
             continue
 
-        eligible_words.append(word.lower())
+        eligible_words.add(word.lower())
     print(str(len(eligible_words)) + ' five-letter words')
     return eligible_words
 
@@ -200,13 +243,13 @@ def get_position_frequency(wordlist):
     # for each letter position, 0-4, determine how often the letter is
     # in that position
     position_count = {}
-    for position in range(0, 5):
+    for position in range(5):
         position_count[position] = {}
         for letter in 'abcdefghijklmnopqrstuvwxyz':
             position_count[position][letter] = 0
 
     for word in wordlist:
-        for position in range(0, 5):
+        for position in range(5):
             letter = word[position]
             position_count[position][letter] = (
                 position_count[position][letter] + 1)
@@ -229,63 +272,35 @@ if __name__ == '__main__':
     # Load word lists and frequencies
     eligible_answers = get_five_letter_words(load_words(''))
     eligible_guesses = get_five_letter_words(load_words(''))
+    score_scale = 1./(len(eligible_answers))**2
     usage_frequency = get_usage_frequency(eligible_answers)
     position_frequency = get_position_frequency(eligible_answers)
 
     # Score all the words, or if the first was given, score just it
     word_scores = {}
     if not my_word1:
+        count = 0
         for word in eligible_guesses:
-            word_scores[word] = score_word(
-                word, usage_frequency, position_frequency, params)
+            count += 1
+            word_scores[word] = \
+              score_word(word, eligible_answers) * score_scale
+            if count % 5 == 0:
+                #print(str(count) + "/" + str(len(eligible_guesses)))
+                sys.stdout.write("\r" + '{:>3}'.format(count) + "/" + \
+                  str(len(eligible_guesses)) + " : " + word + \
+                  ": " + '{:>6.2%}'.format(word_scores[word]))
+                sys.stdout.flush()
     else:
-        word_scores[my_word1] = score_word(
-            my_word1, usage_frequency, position_frequency, params)
+        word_scores[my_word1] = \
+          score_word(my_word1, eligible_answers) * score_scale
 
+    print
+    
     # Display the top ranking words
-    scored_rank = sorted(word_scores, key=word_scores.get, reverse=True)
+    scored_rank = sorted(word_scores, key=word_scores.get)
     max_to_display = min(30,len(word_scores))
 
     for idx in range(max_to_display):
         word = scored_rank[idx]
-        print(word.upper() + ": " + str(int(word_scores[word])))
+        print(word.upper() + ": " + '{:>6.2%}'.format(word_scores[word]))
         
-    print
-
-    # Consider followup words for the top first words
-    two_word_scores = {}
-    first_words_to_consider = min(50,len(scored_rank))
-    for idx in range(first_words_to_consider):
-        word1 = scored_rank[idx]
-        for word2 in eligible_guesses:
-            two_word_scores[word1 + " " + word2] = score_two_words(
-                word1, word2,
-                usage_frequency, position_frequency, params)
-
-    scored_rank_pairs = sorted(
-        two_word_scores, key=two_word_scores.get, reverse=True)
-    max_to_display = 20
-    for idx in range(max_to_display):
-        words = scored_rank_pairs[idx]
-        print(words.upper() + ": " + str(int(two_word_scores[words])))
-
-    print
-    
-    # Consider followup words for the top first pairs
-    three_word_scores = {}
-    first_pairs_to_consider = 80
-    for idx in range(first_pairs_to_consider):
-        pair = scored_rank_pairs[idx]
-        [word1, word2] = pair.split()
-        for word3 in eligible_guesses:
-            three_word_scores[pair + " " + word3] = score_three_words(
-                word1, word2, word3,
-                usage_frequency, position_frequency, params)
-
-    scored_rank_threes = sorted(
-        three_word_scores, key=three_word_scores.get, reverse=True)
-    max_to_display = 20
-    for idx in range(max_to_display):
-        words = scored_rank_threes[idx]
-        print(words.upper() + ": " + str(int(three_word_scores[words])))
-    

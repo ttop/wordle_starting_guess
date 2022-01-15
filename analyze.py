@@ -168,7 +168,7 @@ def print_frequency_count(letter_count):
 
 
 def get_five_letter_words(wordlist):
-    eligible_words = []
+    eligible_words = set()
     for word in wordlist:
         include = True
         if len(word) != 5:
@@ -178,7 +178,7 @@ def get_five_letter_words(wordlist):
             # In case the provided wordlist contains any non-letter characters
             continue
 
-        eligible_words.append(word.lower())
+        eligible_words.add(word.lower())
     print(str(len(eligible_words)) + ' five-letter words')
     return eligible_words
 
