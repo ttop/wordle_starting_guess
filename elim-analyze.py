@@ -1,4 +1,3 @@
-import re
 import sys
 
 def load_words(file):
@@ -42,32 +41,41 @@ def word_match(word, \
 
 # Find conditions on answers given list of guesses and answer
 def eval_words(guesses, answer):
-    exact_positions = {} # Dict of known letters: e.g. {2:r, 4:c}
+    conditions = {}
     exact_letters = set() # Set of exactly known letters: e.g. {c, r}
-    include_letters = set() # Letters that must be included at unknown position
-    mixed_letters = [set(), set(), set(), set(), set()] # Wrong @ each position
-    absent_letters = set() # Don't appear in the answer at all
-
+    conditions['exact_positions'] = {} # Dict of known letters: e.g. {2:r, 4:c}
+    conditions['include_letters'] = set() # Letters included at unknown position
+    conditions['mixed_letters'] = [set(), set(), set(), set(), set()] # Wrong @ each position
+    conditions['absent_letters'] = set() # Don't appear in the answer at all
+    result = "" # Code for Wordle result: e.g. _-_+-
+    
     for guess in guesses:
         for position in range(5):
             if guess[position] == answer[position]:
-                exact_positions[position] = guess[position]
+                conditions['exact_positions'][position] = guess[position]
                 exact_letters.add(guess[position])
+                result = result + "+"
             elif guess[position] in answer:
-                mixed_letters[position].add(guess[position])
-                include_letters.add(guess[position])
+                conditions['mixed_letters'][position].add(guess[position])
+                conditions['include_letters'].add(guess[position])
+                result = result + "-"
             else:
-                absent_letters.add(guess[position])
+                conditions['absent_letters'].add(guess[position])
+                result = result + "_"
+        result = result + " " # Spaces between words
 
-        for letter in exact_letters:
-            include_letters.discard(letter)
+    result = result[:-1] # Remove the final space
+    for letter in exact_letters:
+        conditions['include_letters'].discard(letter)
 
-    return [exact_positions, include_letters, mixed_letters, absent_letters]
+    return [conditions, result]
+#        return [exact_positions, include_letters,
+#                mixed_letters, absent_letters, result]
 
 
 # Score list of words based on how much on average they reduce the space of
 # available answers.
-def score_words(guesses, eligible_answers):
+def score_words_orig(guesses, eligible_answers):
     # Max value of this result is len(eligible_answers)^2
     matches = 0
 
@@ -76,16 +84,54 @@ def score_words(guesses, eligible_answers):
         # If we've already got it, ZERO solution space remains: add nothing
         if answer in guesses:
             continue
-        
-        exact_positions, include_letters, mixed_letters, absent_letters = \
-          eval_words(guesses, answer)
+
+        conditions, result = eval_words(guesses, answer)
+#        exact_positions, include_letters, mixed_letters, \
+#          absent_letters, result = eval_words(guesses, answer)
 
         # Add num of eligible answers that ALSO match this guess
         matches += sum(1 for word in eligible_answers if \
-          word_match(word, exact_positions, include_letters,
-                         mixed_letters, absent_letters))
+          word_match(word, conditions['exact_positions'], \
+            conditions['include_letters'], conditions['mixed_letters'], \
+            conditions['absent_letters']))
 
     return matches
+
+
+# Score list of words based on how much on average they reduce the space of
+# available answers.
+def score_words(guesses, eligible_answers):
+    # Max value of this result is len(eligible_answers)^2
+    score = 0
+    patterns = {} # Number of times each result pattern is seen
+
+    # Loop over all eligible answers and "score" the guess
+    for answer in eligible_answers:
+        # If we've already got it, ZERO solution space remains: add nothing
+        if answer in guesses:
+            continue
+
+        conditions, result = eval_words(guesses, answer)
+#        exact_positions, include_letters, mixed_letters, \
+#          absent_letters, result = eval_words(guesses, answer)
+
+        # Count the number of times this result pattern is seen
+        if result in patterns:
+            patterns[result]['count'] += 1
+        else:
+            patterns[result] = {'count' : 1, 'conditions': conditions}
+
+    for result in patterns:
+        score += patterns[result]['count'] * \
+          sum(1 for word in eligible_answers if \
+          word_match(word,  patterns[result]['conditions']['exact_positions'], \
+            patterns[result]['conditions']['include_letters'], \
+            patterns[result]['conditions']['mixed_letters'], \
+            patterns[result]['conditions']['absent_letters']))
+#            word_match(word, exact_positions, include_letters,
+#                         mixed_letters, absent_letters))
+
+    return score
 
 
 def get_five_letter_words(wordlist):
