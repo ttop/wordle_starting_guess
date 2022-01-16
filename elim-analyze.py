@@ -63,6 +63,9 @@ def eval_words(guesses, answer):
     for letter in exact_letters:
         conditions['include_letters'].discard(letter)
 
+    for position in conditions['exact_positions']:
+        conditions['mixed_letters'][position] = set()
+        
     # Construct unique code
     empty = ""
     for position in range(5):
