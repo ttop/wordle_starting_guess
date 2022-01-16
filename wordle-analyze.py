@@ -1,8 +1,6 @@
 import sys
 
 def load_words(file):
-    # from https://www.ef.edu/english-resources/english-vocabulary/top-3000-words/
-    #file_to_open = 'common_3000.txt'
     if file:
         file_to_open = file
     else:
@@ -144,9 +142,9 @@ if __name__ == '__main__':
     if len(sys.argv) > 2 and len(sys.argv[2]) == 5 and sys.argv[2].isalpha():
         my_word2 = sys.argv[2].lower()
 
-    # Load word lists and frequencies
-    eligible_answers = get_five_letter_words(load_words(''))
-    eligible_guesses = get_five_letter_words(load_words(''))
+    # Load word lists and frequencies, from Wordle source code
+    eligible_answers = get_five_letter_words(load_words('wordle-answers.txt'))
+    eligible_guesses = get_five_letter_words(load_words('wordle-guesses.txt'))
     score_scale = 1./(len(eligible_answers))**2
 
     # Score all the words, or if the first was given, score just it
