@@ -47,26 +47,36 @@ def eval_words(guesses, answer):
     conditions['include_letters'] = set() # Letters included at unknown position
     conditions['mixed_letters'] = [set(), set(), set(), set(), set()] # Wrong @ each position
     conditions['absent_letters'] = set() # Don't appear in the answer at all
-    result = "" # Code for Wordle result: e.g. _-_+-
+    result = "" # Unique code for these conditions
     
     for guess in guesses:
         for position in range(5):
             if guess[position] == answer[position]:
                 conditions['exact_positions'][position] = guess[position]
                 exact_letters.add(guess[position])
-                result = result + "+"
             elif guess[position] in answer:
                 conditions['mixed_letters'][position].add(guess[position])
                 conditions['include_letters'].add(guess[position])
-                result = result + "-"
             else:
                 conditions['absent_letters'].add(guess[position])
-                result = result + "_"
-        result = result + " " # Spaces between words
 
-    result = result[:-1] # Remove the final space
     for letter in exact_letters:
         conditions['include_letters'].discard(letter)
+
+    # Construct unique code
+    empty = ""
+    for position in range(5):
+        result += str(position)
+        if position in conditions['exact_positions']:
+            result += conditions['exact_positions'][position]
+    include_str = empty.join(sorted(conditions['include_letters']))
+    result += "-" + include_str + "-"
+    for position in range(5):
+        result += str(position)
+        mixed_str = empty.join(sorted(conditions['mixed_letters'][position]))
+        result += mixed_str
+    absent_str = empty.join(sorted(conditions['absent_letters']))
+    result += "-" + absent_str
 
     return [conditions, result]
 #        return [exact_positions, include_letters,
@@ -100,7 +110,7 @@ def score_words_orig(guesses, eligible_answers):
 
 # Score list of words based on how much on average they reduce the space of
 # available answers.
-def score_words(guesses, eligible_answers):
+def score_words(guesses, eligible_answers, condition_counts):
     # Max value of this result is len(eligible_answers)^2
     score = 0
     patterns = {} # Number of times each result pattern is seen
@@ -112,8 +122,6 @@ def score_words(guesses, eligible_answers):
             continue
 
         conditions, result = eval_words(guesses, answer)
-#        exact_positions, include_letters, mixed_letters, \
-#          absent_letters, result = eval_words(guesses, answer)
 
         # Count the number of times this result pattern is seen
         if result in patterns:
@@ -122,14 +130,16 @@ def score_words(guesses, eligible_answers):
             patterns[result] = {'count' : 1, 'conditions': conditions}
 
     for result in patterns:
-        score += patterns[result]['count'] * \
-          sum(1 for word in eligible_answers if \
-          word_match(word,  patterns[result]['conditions']['exact_positions'], \
-            patterns[result]['conditions']['include_letters'], \
-            patterns[result]['conditions']['mixed_letters'], \
-            patterns[result]['conditions']['absent_letters']))
-#            word_match(word, exact_positions, include_letters,
-#                         mixed_letters, absent_letters))
+        if result not in condition_counts:
+            condition_counts[result] = patterns[result]['count'] * \
+              sum(1 for word in eligible_answers if \
+                word_match(word,  \
+                  patterns[result]['conditions']['exact_positions'], \
+                  patterns[result]['conditions']['include_letters'], \
+                  patterns[result]['conditions']['mixed_letters'], \
+                  patterns[result]['conditions']['absent_letters']))
+                # Yes, clearer to pass 'conditions', but need max efficiency
+        score += condition_counts[result]
 
     return score
 
@@ -165,6 +175,8 @@ if __name__ == '__main__':
     eligible_guesses = get_five_letter_words(load_words(''))
     score_scale = 1./(len(eligible_answers))**2
 
+    condition_counts = {} # Record of word counts for given conditions
+    
     # Score all the words, or if the first was given, score just it
     word_scores = {}
     if not my_word1:
@@ -174,7 +186,7 @@ if __name__ == '__main__':
         for word in eligible_guesses:
             count += 1
             word_scores[word] = \
-              score_words([word], eligible_answers) * score_scale
+              score_words([word], eligible_answers, condition_counts) * score_scale
             if word_scores[word] < best_score:
                 best = word
                 best_score = word_scores[word]
@@ -191,7 +203,7 @@ if __name__ == '__main__':
                 sys.stdout.flush()
     else:
         word_scores[my_word1] = \
-          score_words([my_word1], eligible_answers) * score_scale
+          score_words([my_word1], eligible_answers, condition_counts) * score_scale
 
     sys.stdout.write("\r" + " "*52)
     sys.stdout.flush()
@@ -226,7 +238,7 @@ if __name__ == '__main__':
                 count2 += 1
                 pair = word1 + " " + word2
                 two_word_scores[pair] = \
-                  score_words([word1, word2], eligible_answers) * score_scale
+                  score_words([word1, word2], eligible_answers, condition_counts) * score_scale
                 if two_word_scores[pair] < best_score:
                     best = pair
                     best_score = two_word_scores[pair]
@@ -244,7 +256,7 @@ if __name__ == '__main__':
                     sys.stdout.flush()
     else:
         two_word_scores[my_word1 + " " + my_word2] = \
-          score_words([my_word1, my_word2], eligible_answers) * score_scale
+          score_words([my_word1, my_word2], eligible_answers, condition_counts) * score_scale
 
     sys.stdout.write("\r" + " "*76)
     sys.stdout.flush()
@@ -285,7 +297,7 @@ if __name__ == '__main__':
             count3 += 1
             triple = my_word1 + " " + my_word2 + " " + word3
             three_word_scores[triple] = \
-              score_words([my_word1, my_word2, word3], eligible_answers) \
+              score_words([my_word1, my_word2, word3], eligible_answers, condition_counts) \
                 * score_scale
             if three_word_scores[triple] < best_score:
                 best = triple
