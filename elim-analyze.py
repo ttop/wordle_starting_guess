@@ -16,25 +16,25 @@ def load_words(file):
 
 # Decide if this word matches known conditions
 def word_match(word, \
-      exact_positions, include_letters, mixed_letters, absent_letters):
+      exact_positions, include_letters, wrong_letters, absent_letters):
     #print word + " : " + exact_re + " : " + str(include_letters)
+
+    for letter in include_letters:
+        if not letter in word:
+            return False
+        
+    for letter in absent_letters:
+        if letter in word:
+            return False
 
     for pos in exact_positions:
         if word[pos] != exact_positions[pos]:
             return False
 
     for pos in range(5):
-        if word[pos] in mixed_letters[pos]:
+        if word[pos] in wrong_letters[pos]:
             return False
 
-    for letter in absent_letters:
-        if letter in word:
-            return False
-
-    for letter in include_letters:
-        if not letter in word:
-            return False
-        
     #print "+++ " + word + " : " + exact_re + " : " + str(include_letters)
     return True
 
@@ -44,8 +44,8 @@ def eval_words(guesses, answer):
     conditions = {}
     exact_letters = set() # Set of exactly known letters: e.g. {c, r}
     conditions['exact_positions'] = {} # Dict of known letters: e.g. {2:r, 4:c}
-    conditions['include_letters'] = set() # Letters included at unknown position
-    conditions['mixed_letters'] = [set(), set(), set(), set(), set()] # Wrong @ each position
+    conditions['include_letters'] = set() # Letters included at any position
+    conditions['wrong_letters'] = [set(), set(), set(), set(), set()] # Wrong @ each position
     conditions['absent_letters'] = set() # Don't appear in the answer at all
     result = "" # Unique code for these conditions
     
@@ -53,18 +53,24 @@ def eval_words(guesses, answer):
         for position in range(5):
             if guess[position] == answer[position]:
                 conditions['exact_positions'][position] = guess[position]
+                conditions['include_letters'].add(guess[position]) # Faster!
                 exact_letters.add(guess[position])
             elif guess[position] in answer:
-                conditions['mixed_letters'][position].add(guess[position])
+                conditions['wrong_letters'][position].add(guess[position])
                 conditions['include_letters'].add(guess[position])
             else:
                 conditions['absent_letters'].add(guess[position])
 
-    for letter in exact_letters:
-        conditions['include_letters'].discard(letter)
+    #for letter in exact_letters:
+    #    conditions['include_letters'].discard(letter)
 
     for position in conditions['exact_positions']:
-        conditions['mixed_letters'][position] = set()
+        conditions['wrong_letters'][position] = set()
+
+    for position in range(5):
+        for letter in conditions['absent_letters']:
+            conditions['wrong_letters'][position].discard(letter)
+        
         
     # Construct unique code
     empty = ""
@@ -76,39 +82,14 @@ def eval_words(guesses, answer):
     result += "-" + include_str + "-"
     for position in range(5):
         result += str(position)
-        mixed_str = empty.join(sorted(conditions['mixed_letters'][position]))
+        mixed_str = empty.join(sorted(conditions['wrong_letters'][position]))
         result += mixed_str
     absent_str = empty.join(sorted(conditions['absent_letters']))
     result += "-" + absent_str
 
     return [conditions, result]
 #        return [exact_positions, include_letters,
-#                mixed_letters, absent_letters, result]
-
-
-# Score list of words based on how much on average they reduce the space of
-# available answers.
-def score_words_orig(guesses, eligible_answers):
-    # Max value of this result is len(eligible_answers)^2
-    matches = 0
-
-    # Loop over all eligible answers and "score" the guess
-    for answer in eligible_answers:
-        # If we've already got it, ZERO solution space remains: add nothing
-        if answer in guesses:
-            continue
-
-        conditions, result = eval_words(guesses, answer)
-#        exact_positions, include_letters, mixed_letters, \
-#          absent_letters, result = eval_words(guesses, answer)
-
-        # Add num of eligible answers that ALSO match this guess
-        matches += sum(1 for word in eligible_answers if \
-          word_match(word, conditions['exact_positions'], \
-            conditions['include_letters'], conditions['mixed_letters'], \
-            conditions['absent_letters']))
-
-    return matches
+#                wrong_letters, absent_letters, result]
 
 
 # Score list of words based on how much on average they reduce the space of
@@ -139,7 +120,7 @@ def score_words(guesses, eligible_answers, condition_counts):
                 word_match(word,  \
                   patterns[result]['conditions']['exact_positions'], \
                   patterns[result]['conditions']['include_letters'], \
-                  patterns[result]['conditions']['mixed_letters'], \
+                  patterns[result]['conditions']['wrong_letters'], \
                   patterns[result]['conditions']['absent_letters']))
                 # Yes, clearer to pass 'conditions', but need max efficiency
         score += condition_counts[result]
