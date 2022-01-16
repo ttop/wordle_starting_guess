@@ -22,7 +22,7 @@ def word_match(word, \
     for letter in include_letters:
         if not letter in word:
             return False
-        
+
     for letter in absent_letters:
         if letter in word:
             return False
@@ -208,6 +208,7 @@ if __name__ == '__main__':
             print(word.upper() + ": " + '{:>6.2%}'.format(word_scores[word]))
 
 
+
     # Now consider second words
     two_word_scores = {}
     if not my_word2:
@@ -268,6 +269,7 @@ if __name__ == '__main__':
               '{:>6.2%}'.format(word_scores[word_list[0]]) + " * " \
               '{:>6.2%}'.format(\
                   two_word_scores[words]/word_scores[word_list[0]]))
+
 
 
     # If (only if) we provided a second word, heck, let's go for three
