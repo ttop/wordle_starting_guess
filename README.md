@@ -6,7 +6,7 @@ The code reads a list of common words (not plurals or conjugated verbs!) and ext
 
 For multi-word suggestions, you can either provide a first word (or two) as command line arguments to compute the best options for the second (or third) word, or (the default) the code will consider the top 20 first words and score all eligible second words to follow them.
 
-The wordle-analyze.py and answers-analyze.py scripts here use the actual Wordle word lists: with this scoring strategy, I've concluded that the details do matter (more than in letter frequency approaches). (Earlier versions used word lists from ef.edu and wordfrequency.info.) It's important that there are only 2315 allowed Wordle _answers_, much less than the 12,972 allowed Wordle _guesses_: the answers are limited to more familiar words, and do not include any "derived forms" like plurals or conjugated verbs. (So 'S' is rare as the final letter!)
+The wordle-analyze.py and answers-analyze.py scripts here use the actual Wordle word lists: with this scoring strategy, I've concluded that the details do matter (more than in letter frequency approaches). (Earlier versions used word lists from ef.edu and wordfrequency.info.) It's important that there are only 2,315 allowed Wordle _answers_, much less than the 12,972 allowed Wordle _guesses_: the answers are limited to more familiar words, and do not include any "derived forms" like plurals or conjugated verbs. (So 'S' is rare as the final letter!)
 
 If you use the answers-analyze.py script to compute the top starting guesses including only words that could be answers, the top suggestions for initial words and initial word pairs (and the average percentage of eligible answers that are still allowed after each) are:
 
@@ -167,7 +167,7 @@ All of those results were limited to suggesting words that could be answers, but
 	[+TRACE SOLID:  0.206% =  3.20% *  6.45%]
 	REAST COLIN:  0.207% =  3.10% *  6.69%
 	SALET ORCIN:  0.207% =  3.08% *  6.74%
-	?IRATE CLONS:  0.208% =  2.76% *  7.54%
+	IRATE CLONS:  0.208% =  2.76% *  7.54%
 	SALET CORNI:  0.208% =  3.08% *  6.75%
 	SLATE PROIN:  0.209% =  3.09% *  6.75%
 	TALER COINS:  0.209% =  2.93% *  7.15%
@@ -179,7 +179,7 @@ All of those results were limited to suggesting words that could be answers, but
 	RAINE DOLTS:  0.211% =  2.90% *  7.28%
 	RAILE PONTS:  0.211% =  2.65% *  7.97%
 	SOARE CLIPT:  0.212% =  2.69% *  7.86%
-	?SLATE DORIC:  0.212% =  3.09% *  6.86%
+	SLATE DORIC:  0.212% =  3.09% *  6.86%
 	SNARE LOTIC:  0.212% =  3.07% *  6.92%
 	+SLATE MINOR:  0.213% =  3.09% *  6.89%
 
