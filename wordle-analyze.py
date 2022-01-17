@@ -159,7 +159,7 @@ if __name__ == '__main__':
     if len(sys.argv) > 2 and len(sys.argv[2]) == 5 and sys.argv[2].isalpha():
         my_word2 = sys.argv[2].lower()
 
-    # Load word lists and frequencies, based on Wordle word lists
+    # Load word lists and frequencies, using the Wordle word lists
     eligible_answers = get_five_letter_words(load_words('wordle-answers.txt'))
     eligible_guesses = get_five_letter_words(load_words('wordle-guesses.txt'))
 
@@ -195,12 +195,29 @@ if __name__ == '__main__':
     else:
         word_scores[my_word1] = score_words([my_word1], eligible_answers)
 
-    sys.stdout.write("\r" + " "*75)
+    sys.stdout.write("\r" + " "*77)
     sys.stdout.flush()
     print()
-    
-    # Display the top ranking words, in all three ways
+
+
+    # Rank the words, in three ways
     scored_rank = [[],[],[]]
+    for rank_by in range(3):
+        # Break ties in worst case using average
+        scored_rank[rank_by] = sorted(word_scores, \
+          key=lambda score: (word_scores[score][rank_by],word_scores[score][0]))
+
+    # Keep track of individual word ranking order
+    word_ranks =  {}
+    for word in word_scores:
+        word_ranks[word] = [0,0,0]
+
+    for word_num in range(len(word_scores)):
+        for rank_by in range(3):
+            word_ranks[scored_rank[rank_by][word_num]][rank_by] = word_num+1
+
+            
+    # Display the top ranking words, in all three ways
     for rank_by in range(3):
         print("Ranked by " + ranking_labels[rank_by] + ":")
         # Break ties in worst case using average
@@ -208,23 +225,29 @@ if __name__ == '__main__':
           key=lambda score: (word_scores[score][rank_by],word_scores[score][0]))
 
         max_to_display = min(30,len(word_scores))
-        print(" "*9 + "avg" + " "*4 + "worst" + " "*4 + "log")
+        print(" "*9 + "avg" + " "*4 + "worst" + " "*4 + "log" + " "*8 + "rankings")
         for i in range(max_to_display):
             word = scored_rank[rank_by][i]
             print(word.upper() + ": " + 
                          '{:>6.2%}'.format(word_scores[word][0]) +
                   "  " + '{:>6.2%}'.format(word_scores[word][1]) +
-                  "   " + '{:>4.3f}'.format(word_scores[word][2]))
+                  "   " + '{:>4.3f}'.format(word_scores[word][2]) +
+                  "   " + '{:>5}'.format(word_ranks[word][0]) +
+                  "   " + '{:>5}'.format(word_ranks[word][1]) +
+                  "   " + '{:>5}'.format(word_ranks[word][2]))
 
         # Show the worst words, too, out of curiosity
         if len(word_scores) > max_to_display+5:
             print("...")
             for i in range(-5,0):
                 word = scored_rank[rank_by][i]
-                print(word.upper() + ": " + \
-                           '{:>6.2%}'.format(word_scores[word][0]) +
-                    "  " + '{:>6.2%}'.format(word_scores[word][1]) +
-                    "   " + '{:>4.3f}'.format(word_scores[word][2]))
+                print(word.upper() + ": " + 
+                            '{:>6.2%}'.format(word_scores[word][0]) +
+                    "  " +  '{:>6.2%}'.format(word_scores[word][1]) +
+                    "   " + '{:>4.3f}'.format(word_scores[word][2]) +
+                    "   " + '{:>5}'.format(word_ranks[word][0]) +
+                    "   " + '{:>5}'.format(word_ranks[word][1]) +
+                    "   " + '{:>5}'.format(word_ranks[word][2]))
         print()
 
 
@@ -268,7 +291,7 @@ if __name__ == '__main__':
         two_word_scores[my_word1 + " " + my_word2] = \
           score_words([my_word1, my_word2], eligible_answers)
 
-    sys.stdout.write("\r" + " "*75)
+    sys.stdout.write("\r" + " "*77)
     sys.stdout.flush()
     print()
 
@@ -294,7 +317,7 @@ if __name__ == '__main__':
                   two_word_scores[words][0]/word_scores[word_list[0]][0]) + \
               "  " + \
               '{:>6.3%}'.format(two_word_scores[words][1]) + "=" \
-              '{:>5.2%}'.format(word_scores[word_list[0]][1]) + "*" \
+              '{:>6.2%}'.format(word_scores[word_list[0]][1]) + "*" \
               '{:>5.1%}'.format(\
                     two_word_scores[words][1]/word_scores[word_list[0]][1]) + \
               "  " + \
@@ -316,7 +339,7 @@ if __name__ == '__main__':
                                         word_scores[word_list[0]][0]) + \
                   "  " + \
                   '{:>6.3%}'.format(two_word_scores[words][1]) + "=" \
-                  '{:>5.2%}'.format(word_scores[word_list[0]][1]) + "*" \
+                  '{:>6.2%}'.format(word_scores[word_list[0]][1]) + "*" \
                   '{:>5.1%}'.format(two_word_scores[words][1] / \
                                         word_scores[word_list[0]][1]) + \
                   "  " + \
@@ -355,7 +378,7 @@ if __name__ == '__main__':
                   '{:>7.3%}'.format(best_score) + "]  ")
                 sys.stdout.flush()
 
-        sys.stdout.write("\r" + " "*75)
+        sys.stdout.write("\r" + " "*77)
         sys.stdout.flush()
         print()
 
