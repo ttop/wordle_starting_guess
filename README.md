@@ -136,7 +136,7 @@ Clearly the two-word suggestions depend much more sensitively on strategy (they'
 
 And of course, take _all_ of this with a grain of salt: these suggestions might be optimal for a computer trying to guess, but it's entirely possible that the best approach for human brains is different. Maybe we'd be wiser to prioritize vowels, or first/last letters, or something else. But maybe these lists can still be useful as a menu of options.
 
-Looking at a few third word choices, it would appear that an uninformed, "generic" choice of third word really isn't very helpful. Here are a few examples:
+Looking at a few generic third word choices, it's hard to judge how successful they are by looking at their contribution to the total scores:
 
 	Ranked by average solution space reduction:
 						avg               worst             log
@@ -152,7 +152,7 @@ Looking at a few third word choices, it would appear that an uninformed, "generi
 	RAISE CLOUT DOWNY: 0.080%=2.6%*8%*36% 0.35%=7%*13%*36% 0.19=1.6-1.1-0.3
 	RAISE CLOUT DINGY: 0.080%=2.6%*8%*36% 0.43%=7%*13%*45% 0.18=1.6-1.1-0.4
 
-At best, these generic third words reduce the range of possibilities by 2/3 or so: much less than an order of magnitude. You're almost certainly better off making an informed third choice based on the knowledge gained from the first two guesses (though perhaps the program output could still be useful as a list of suggestions).
+At best, these generic third words reduce the range of possibilities by 2/3 or so: much less than an order of magnitude. But in fact, these numbers are getting close to the least they could be. The worst-case situation after "trice salmon dumpy" is a collection of just 8 possible words, and the _average_ number of words remaining is 1.5: that suggests that you've solved the whole puzzle more often than not. Still, a word chosen to fit the known data is probably even more likely to narrow things down to a unique answer.
 
 A somewhat longer collection of all this data is in the answers-analyze-results.txt file.
 
@@ -265,5 +265,9 @@ All of those results were limited to suggesting words that could be answers, but
 	REOIL CANST: 0.203%=3.33%* 6.1%  1.037%= 8.03%*12.9%  0.497=1.705-1.209
 	CARTE NOILS: 0.195%=3.18%* 6.1%  0.907%=10.63%* 8.5%  0.497=1.620-1.123
 	CARTE LOINS: 0.199%=3.18%* 6.3%  0.907%=10.63%* 8.5%  0.498=1.620-1.123
+
+	SOARE CLINT DUMPY: 0.068%=2.7%*7%*36% 0.52%=8%*14%*48% 0.13=1.6-1.1-0.3
+	SOARE CLINT BUMPH: 0.070%=2.7%*7%*37% 0.43%=8%*14%*40% 0.13=1.6-1.1-0.3
+	SOARE CLINT PUDGY: 0.070%=2.7%*7%*37% 0.52%=8%*14%*48% 0.13=1.6-1.1-0.3
 
 If you're curious, ROATE is an archaic variant spelling of "rote", RAILE means "to flow (steadily and smoothly), SOARE is an obsolete term for a young hawk, CLINT is a Scottish term for a hard, flinty rock, CLONS are genetically identical cells produced by asexual reproduction, and so on. Honestly, I feel kinda dirty using word recommendations that aren't remotely part of my active vocabulary, but these pairs do narrow down your options more than most of the first list. If you aren't willing to jump to the mysterious SOARE CLINT despite its great effectiveness and you want a better first word than TRAIL, maybe AROSE CLINT is close enough to familiar language to be okay? CRATE LOINS is at least made of familiar words, even if the second is plural and can't be an answer, and CRATE SOLID is still a solid choice even though it falls just off these lists. Or maybe IRATE CLONS is close enough to the related word "clones" to be worth using. Your call!
