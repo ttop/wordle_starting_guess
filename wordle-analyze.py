@@ -349,6 +349,9 @@ if __name__ == '__main__':
                                         two_word_scores[words][2]))
         print()
 
+    # Consider limiting eligible_guesses to eligible_answers here
+    eligible_guesses = eligible_answers
+    print("Now considering only eligible answers!")
 
     # If (only if) we provided a second word, heck, let's go for three
     three_word_scores = {}
@@ -371,7 +374,7 @@ if __name__ == '__main__':
                   str(len(eligible_guesses)) + " (" + \
                   '{:>3.0%}'.format(float(count3)/len(eligible_guesses)) + \
                   "): " + triple + \
-                  ": " + \
+                  ":" + \
                   '{:>7.3%}'.format(\
                         three_word_scores[triple][score_progress]) + \
                   " [Best: " + best + ":" + \

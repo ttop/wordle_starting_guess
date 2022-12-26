@@ -370,7 +370,7 @@ if __name__ == '__main__':
                 sys.stdout.write("\r" + '{:>3}'.format(count3) + "/" + \
                   str(len(eligible_guesses)) + " (" + \
                   '{:>3.0%}'.format(float(count3)/len(eligible_guesses)) + \
-                  "): " + triple + \
+                  "):" + triple + \
                   ": " + \
                   '{:>7.3%}'.format(\
                         three_word_scores[triple][score_progress]) + \
