@@ -90,6 +90,48 @@ def eval_words(guesses, answer):
     return result
 
 
+# Find conditions on answers given list of guesses and answer
+# This version does not track absent letters, just positive info.
+def eval_words_positive(guesses, answer):
+    exact_letters = set() # Set of exactly known letters: e.g. {c, r}
+    exact_positions = {} # Dict of known letters: e.g. {2:r, 4:c}
+    include_letters = set() # Letters included at any position
+#    wrong_letters = [set(), set(), set(), set(), set()] # Wrong @ each position
+    result = "" # Unique code for these conditions
+
+    for guess in guesses:
+        for position in range(5):
+            if guess[position] == answer[position]:
+                exact_positions[position] = guess[position]
+                include_letters.add(guess[position]) # Faster!
+                exact_letters.add(guess[position])
+            elif guess[position] in answer:
+#                wrong_letters[position].add(guess[position])
+                include_letters.add(guess[position])
+
+    #for letter in exact_letters:
+    #    include_letters'].discard(letter)
+
+#    for position in exact_positions:
+#        wrong_letters[position] = set()
+
+    # Construct unique result code
+    empty = ""
+    for position in range(5):
+        result += str(position)
+        if position in exact_positions:
+            result += exact_positions[position]
+    include_str = empty.join(sorted(include_letters))
+    result += "-" + include_str #+ "-"
+#    for position in range(5):
+#        result += str(position)
+#        mixed_str = empty.join(sorted(wrong_letters[position]))
+#        result += mixed_str
+
+###    print(result)
+    return result
+
+
 # Score list of words based on how much on average they reduce the space of
 # available answers.
 def score_words(guesses, eligible_answers):
@@ -109,6 +151,48 @@ def score_words(guesses, eligible_answers):
 
         # What information did we learn from this word?
         result = eval_words(guesses, answer)
+
+        # Count the number of times this result pattern is seen
+        patterns[result] = patterns[result] + 1
+
+    for result in patterns:
+        # The # of times the pattern was seen is also the # of matches!
+        # So prob(result) equals frac_matching(result) is just the square.
+        avg_remaining += patterns[result]**2
+        max_category = max(max_category, patterns[result])
+        log_depth += patterns[result] * math.log10(patterns[result])
+
+    # Normalize once for prob of category and once for fract remaining
+    avg_remaining = float(avg_remaining)/len(eligible_answers)**2
+    # Just a max fract remaining, so normalize by dividing once
+    max_category = float(max_category)/len(eligible_answers)
+    # Normalize for probability of each category before averaging
+    log_depth = log_depth/len(eligible_answers)
+
+
+    return [avg_remaining, max_category, log_depth]
+
+
+# Score list of words based on how much on average they reduce the space of
+# available answers.
+# This version doesn't include information from absent letters
+def score_words_positive(guesses, eligible_answers):
+    #Calculate three different scores
+    
+    # Max value of this result is len(eligible_answers)^2
+    avg_remaining = 0 # Later /len(e_a)^2 to give weighted avg remaining answers
+    max_category = 0 # Size of largest pattern category (worst case outcome)
+    log_depth = 0 # Store a sum of logs of sizes, to estimate later steps
+    patterns = Counter() # Number of times each result pattern is seen
+
+    # Loop over all eligible answers and "score" the guess
+    for answer in eligible_answers:
+        # If we've already got it, ZERO solution space remains: add nothing
+        if answer in guesses:
+            continue
+
+        # What information did we learn from this word?
+        result = eval_words_positive(guesses, answer)
 
         # Count the number of times this result pattern is seen
         patterns[result] = patterns[result] + 1
@@ -158,12 +242,13 @@ if __name__ == '__main__':
         my_word2 = sys.argv[2].lower()
 
     # Load word lists and frequencies
-    eligible_answers = get_five_letter_words(load_words(''))
-    eligible_guesses = get_five_letter_words(load_words(''))
+    eligible_answers = get_five_letter_words(load_words('wordle-answers.txt'))
+    eligible_guesses = get_five_letter_words(load_words('wordle-guesses.txt'))
 
     # Score all the words, or if the first was given, score just it
     # Each score is a list: average remaining, worst case, and average log
     word_scores = {}
+    positive_score = []
     ranking_labels = ["average solution space reduction",
                           "worst case remaining possibilities",
                           "average log-estimated guesses remaining"]
@@ -175,7 +260,14 @@ if __name__ == '__main__':
         best_score = 1
         for word in eligible_guesses:
             count += 1
+
+            # Score based on the average of total and positive information
             word_scores[word] = score_words([word], eligible_answers)
+            positive_score = score_words_positive([word], eligible_answers)
+            for i in range(3):
+                word_scores[word][i] = \
+                    0.5 * word_scores[word][i] + 0.5 * positive_score[i]
+            
             if word_scores[word][score_progress] < best_score:
                 best = word
                 best_score = word_scores[word][score_progress]
@@ -191,7 +283,13 @@ if __name__ == '__main__':
                   '{:>6.2%}'.format(best_score) + "]  ")
                 sys.stdout.flush()
     else:
+        # Score based on the average of total and positive information
         word_scores[my_word1] = score_words([my_word1], eligible_answers)
+        positive_score = score_words_positive([my_word1], eligible_answers)
+        for i in range(3):
+            word_scores[my_word1][i] = \
+                0.5 * word_scores[my_word1][i] + 0.5 * positive_score[i]
+            
 
     sys.stdout.write("\r" + " "*77)
     sys.stdout.flush()
