@@ -1,5 +1,6 @@
 import sys
 import math
+from collections import Counter
 
 def load_words(file):
     # from https://www.ef.edu/english-resources/english-vocabulary/top-3000-words/
@@ -98,7 +99,7 @@ def score_words(guesses, eligible_answers):
     avg_remaining = 0 # Later /len(e_a)^2 to give weighted avg remaining answers
     max_category = 0 # Size of largest pattern category (worst case outcome)
     log_depth = 0 # Store a sum of logs of sizes, to estimate later steps
-    patterns = {} # Number of times each result pattern is seen
+    patterns = Counter() # Number of times each result pattern is seen
 
     # Loop over all eligible answers and "score" the guess
     for answer in eligible_answers:
@@ -110,10 +111,7 @@ def score_words(guesses, eligible_answers):
         result = eval_words(guesses, answer)
 
         # Count the number of times this result pattern is seen
-        if result in patterns:
-            patterns[result] += 1
-        else:
-            patterns[result] = 1
+        patterns[result] = patterns[result] + 1
 
     for result in patterns:
         # The # of times the pattern was seen is also the # of matches!
