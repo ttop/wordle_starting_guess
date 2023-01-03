@@ -2,6 +2,7 @@ import sys
 import math
 from collections import Counter
 
+
 def load_words(file):
     # from https://www.ef.edu/english-resources/english-vocabulary/top-3000-words/
     #file_to_open = 'common_3000.txt'
@@ -41,61 +42,80 @@ def word_match(word, \
 
 
 # Find conditions on answers given list of guesses and answer
-def eval_words(guesses, answer):
-    answer_counts = Counter(answer) # Letter freqencies in answer
-    guess_counts = Counter() # Letter frequencies in each guess
+def eval_words(guesses, answer, answer_counts, zero_counts):
+    # Counters are actually pretty slow, and overkill
+    #answer_counts = Counter(answer) # Letter freqencies in answer
+    #guess_counts = Counter() # Letter frequencies in each guess
 
-    exact_letters = set() # Set of exactly known letters: e.g. {c, r}
-    exact_positions = {} # Dict of known letters: e.g. {2:r, 4:c}
-    #include_letters = set() # Letters included at any position
-    include_letters = Counter() # Count known multiplicities: e.g. {c:1, e:2}
+    correct_positions = {} # Dict of known letters: e.g. {2:r, 4:c}
+    correct_counts = dict(zero_counts) # Count occurrances of known letters
+    letters_max_seen = dict(zero_counts) # Max occurrences seen in a guess
     wrong_letters = [set(), set(), set(), set(), set()] # Wrong @ each position
-    absent_letters = set() # Don't appear in the answer at all
+    exact_letter_counts = set() # Letters whose max seen is exact (including 0)
+    letters_fixed = set() # Letters that can't appear in unknown places
+    
+    
     result = "" # Unique code for these conditions
     
     for guess in guesses:
+        guess_counts = dict(zero_counts)
         for position in range(5):
-            if guess[position] == answer[position]:
-                exact_positions[position] = guess[position]
-                exact_letters.add(guess[position])
-            elif guess[position] in answer:
-                wrong_letters[position].add(guess[position])
-            else:
-                absent_letters.add(guess[position])
-        # What letter frequency information have we learned?
-        guess_counts.update(guess)
-        for letter in guess_counts:
-            if answer_counts[letter] > 0:
-                include_letters[letter] = max(include_letters[letter], \
-                            min(guess_counts[letter], answer_counts[letter]))
-        guess_counts.clear()
+            guess_letter = guess[position]
+            if guess_letter == answer[position]:
+                correct_positions[position] = guess_letter
+            elif guess_letter in answer:
+                wrong_letters[position].add(guess_letter)
+            guess_counts[guess_letter] += 1
+        #for letter in guess:
+        #    guess_counts[letter] = guess_counts[letter] + 1
+        for letter in set(guess):  # Use set to remove duplicates
+            # Update max seen if necessary, based on info seen in this guess
+            letter_seen = min(guess_counts[letter], answer_counts[letter])
+            if letters_max_seen[letter] < letter_seen:
+                letters_max_seen[letter] = letter_seen
+            # Record whether our max seen is exactly right (including zeros)
+            if answer_counts[letter] < guess_counts[letter]:
+                exact_letter_counts.add(letter)
+        #    if answer_counts[letter] > 0:
+        #        include_letters[letter] = max(include_letters[letter], \
+        #                    min(guess_counts[letter], answer_counts[letter]))
 
-    for position in exact_positions:
+    # Don't track wrong guesses for known positions
+    for position in correct_positions:
         wrong_letters[position] = set()
 
+    # Count occurrances of letters whose positions are known
+    for position in correct_positions:
+        correct_counts[correct_positions[position]] += 1
+
+    # Can't be in unknown position if exact number present equals known pos's
+    letters_fixed = {letter for letter in exact_letter_counts \
+                     if letters_max_seen[letter] == correct_counts[letter]}
+    
     for position in range(5):
-        for letter in absent_letters:
-            wrong_letters[position].discard(letter)
-        
-        
+        # Remove any elements of the fixed list from the specific wrong lists
+        wrong_letters[position].difference_update(letters_fixed)
+
+
     # Construct unique result code
     empty = ""
     for position in range(5):
         result += str(position)
-        if position in exact_positions:
-            result += exact_positions[position]
-    #include_str = empty.join(sorted(include_letters))
-    #result += "-" + include_str + "-"
+        if position in correct_positions:
+            result += correct_positions[position]
+    ##include_str = empty.join(sorted(include_letters))
+    ##result += "-" + include_str + "-"
     result += "-"
-    for letter in sorted(include_letters):
-        result += letter + str(include_letters[letter])
+    for letter in letters_max_seen:
+        if letters_max_seen[letter] > 0:
+            result += letter + str(letters_max_seen[letter])
     result += "-"
     for position in range(5):
         result += str(position)
         mixed_str = empty.join(sorted(wrong_letters[position]))
         result += mixed_str
-    absent_str = empty.join(sorted(absent_letters))
-    result += "-" + absent_str
+    exact_str = empty.join(sorted(exact_letter_counts))
+    result += "-" + exact_str
 
     return result
 
@@ -111,14 +131,25 @@ def score_words(guesses, eligible_answers):
     log_depth = 0 # Store a sum of logs of sizes, to estimate later steps
     patterns = Counter() # Number of times each result pattern is seen
 
+    # Initialize a dictionary of letter counts (faster than Counter)
+    zero_counts = {}
+    for i in "abcdefghijklmnopqrstuvwxyz":
+        zero_counts[i] = 0
+    answer_counts = dict(zero_counts) # Explicitly make a copy
+    
     # Loop over all eligible answers and "score" the guess
     for answer in eligible_answers:
         # If we've already got it, ZERO solution space remains: add nothing
         if answer in guesses:
             continue
 
+        # Count letter frequencies in the answer just once
+        for letter in answer:
+            answer_counts[letter] = answer_counts[letter] + 1
+
         # What information did we learn from this word?
-        result = eval_words(guesses, answer)
+        # Pass a *copy* of the zeroed count dictionary to avoid re-initializing
+        result = eval_words(guesses, answer, answer_counts, dict(zero_counts))
 
         # Count the number of times this result pattern is seen
         patterns[result] = patterns[result] + 1
@@ -232,7 +263,7 @@ if __name__ == '__main__':
         scored_rank[rank_by] = sorted(word_scores, \
           key=lambda score: (word_scores[score][rank_by],word_scores[score][0]))
 
-        max_to_display = min(30,len(word_scores))
+        max_to_display = min(50,len(word_scores))
         print(" "*9 + "avg" + " "*4 + "worst" + " "*4 + "log" + " "*8 + "rankings")
         for i in range(max_to_display):
             word = scored_rank[rank_by][i]
@@ -266,7 +297,7 @@ if __name__ == '__main__':
         best_score = 1
 
         # Merge first words of all three rankings
-        first_words_to_consider = min(20,len(scored_rank[0]))
+        first_words_to_consider = min(50,len(scored_rank[0]))
         first_words = set(scored_rank[0][:first_words_to_consider]).union(
             scored_rank[1][:first_words_to_consider],
             scored_rank[2][:first_words_to_consider])
@@ -357,10 +388,6 @@ if __name__ == '__main__':
                                         two_word_scores[words][2]))
         print()
 
-    # Consider limiting eligible_guesses to eligible_answers here
-    eligible_guesses = eligible_answers
-    print("Now considering only eligible answers!")
-
     # If (only if) we provided a second word, heck, let's go for three
     three_word_scores = {}
     if my_word1 and my_word2:
@@ -368,6 +395,10 @@ if __name__ == '__main__':
         best = ""
         best_score = 1
         
+        # Consider limiting eligible_guesses to eligible_answers here
+        eligible_guesses = eligible_answers
+        print("Now considering only eligible answers!")
+
         for word3 in eligible_guesses:
             count3 += 1
             triple = my_word1 + " " + my_word2 + " " + word3
