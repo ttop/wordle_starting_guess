@@ -42,9 +42,13 @@ def word_match(word, \
 
 # Find conditions on answers given list of guesses and answer
 def eval_words(guesses, answer):
+    answer_counts = Counter(answer) # Letter freqencies in answer
+    guess_counts = Counter() # Letter frequencies in each guess
+
     exact_letters = set() # Set of exactly known letters: e.g. {c, r}
     exact_positions = {} # Dict of known letters: e.g. {2:r, 4:c}
-    include_letters = set() # Letters included at any position
+    #include_letters = set() # Letters included at any position
+    include_letters = Counter() # Count known multiplicities: e.g. {c:1, e:2}
     wrong_letters = [set(), set(), set(), set(), set()] # Wrong @ each position
     absent_letters = set() # Don't appear in the answer at all
     result = "" # Unique code for these conditions
@@ -53,16 +57,18 @@ def eval_words(guesses, answer):
         for position in range(5):
             if guess[position] == answer[position]:
                 exact_positions[position] = guess[position]
-                include_letters.add(guess[position]) # Faster!
                 exact_letters.add(guess[position])
             elif guess[position] in answer:
                 wrong_letters[position].add(guess[position])
-                include_letters.add(guess[position])
             else:
                 absent_letters.add(guess[position])
-
-    #for letter in exact_letters:
-    #    include_letters'].discard(letter)
+        # What letter frequency information have we learned?
+        guess_counts.update(guess)
+        for letter in guess_counts:
+            if answer_counts[letter] > 0:
+                include_letters[letter] = max(include_letters[letter], \
+                            min(guess_counts[letter], answer_counts[letter]))
+        guess_counts.clear()
 
     for position in exact_positions:
         wrong_letters[position] = set()
@@ -78,8 +84,12 @@ def eval_words(guesses, answer):
         result += str(position)
         if position in exact_positions:
             result += exact_positions[position]
-    include_str = empty.join(sorted(include_letters))
-    result += "-" + include_str + "-"
+    #include_str = empty.join(sorted(include_letters))
+    #result += "-" + include_str + "-"
+    result += "-"
+    for letter in sorted(include_letters):
+        result += letter + str(include_letters[letter])
+    result += "-"
     for position in range(5):
         result += str(position)
         mixed_str = empty.join(sorted(wrong_letters[position]))
